@@ -56,6 +56,7 @@ public class SmartPluginManager implements PluginManager {
     }
 
     public void callEvent(Event event) {
+        plugin.special(event);
         plugin.cancelEvent(event);
         plugin.debugMessage(event);
         plugin.godMode(event);

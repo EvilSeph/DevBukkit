@@ -20,8 +20,7 @@ import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.enchantment.PrepareItemEnchantEvent;
 import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
 import org.bukkit.event.entity.*;
-import org.bukkit.event.inventory.FurnaceBurnEvent;
-import org.bukkit.event.inventory.FurnaceSmeltEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.painting.PaintingBreakByEntityEvent;
 import org.bukkit.event.painting.PaintingBreakEvent;
 import org.bukkit.event.painting.PaintingEvent;
@@ -87,6 +86,7 @@ public class DevBukkit extends JavaPlugin {
         eventAliases.put("entity", EntityEvent.class);
         eventAliases.put("creaturesp",CreatureSpawnEvent.class);
         eventAliases.put("creeperp", CreeperPowerEvent.class);
+        eventAliases.put("entitybd", EntityBreakDoorEvent.class);
         eventAliases.put("entitycbb", EntityCombustByBlockEvent.class);
         eventAliases.put("entitycbe", EntityCombustByEntityEvent.class);
         eventAliases.put("entityc", EntityCombustEvent.class);
@@ -143,8 +143,15 @@ public class DevBukkit extends JavaPlugin {
         eventAliases.put("playerts", PlayerToggleSneakEvent.class);
         eventAliases.put("playerfe", PlayerFishEvent.class);
         // inventory event aliases
+        eventAliases.put("inv", InventoryEvent.class);
+        eventAliases.put("brew", BrewEvent.class);
+        eventAliases.put("crafti", CraftItemEvent.class);
         eventAliases.put("furnaceb", FurnaceBurnEvent.class);
         eventAliases.put("furnaces", FurnaceSmeltEvent.class);
+        eventAliases.put("invcli", InventoryClickEvent.class);
+        eventAliases.put("invclo", InventoryCloseEvent.class);
+        eventAliases.put("invop", InventoryOpenEvent.class);
+        eventAliases.put("prepic", PrepareItemCraftEvent.class);
         // server event aliases
         eventAliases.put("server", ServerEvent.class);
         eventAliases.put("mapinit", MapInitializeEvent.class);
@@ -184,22 +191,7 @@ public class DevBukkit extends JavaPlugin {
     public void onEnable() {
         //TODO integrate persistence when we get it
         initialiseEventAliases();
-        setDebugMode(BlockEvent.class,false,false);
-        setDebugMode(EntityEvent.class,false,false);
-        setDebugMode(PaintingEvent.class,false,false);
-        setDebugMode(PlayerEvent.class,false,false);
-        setDebugMode(ServerEvent.class,false,false);
-        setDebugMode(VehicleEvent.class,false,false);
-        setDebugMode(WeatherEvent.class,false,false);
-        setDebugMode(WorldEvent.class,false,false);
-        setCancelMode(BlockEvent.class,false,false);
-        setCancelMode(EntityEvent.class,false,false);
-        setCancelMode(PaintingEvent.class,false,false);
-        setCancelMode(PlayerEvent.class,false,false);
-        setCancelMode(ServerEvent.class,false,false);
-        setCancelMode(VehicleEvent.class,false,false);
-        setCancelMode(WeatherEvent.class,false,false);
-        setCancelMode(WorldEvent.class,false,false);
+        reset();
 
         try {
             Field pluginManager = getServer().getClass().getDeclaredField("pluginManager");
@@ -369,22 +361,7 @@ public class DevBukkit extends JavaPlugin {
                 debugMessage("In Vehicle: " + player.isInsideVehicle());
                 debugMessage("Vehicle: " + player.getVehicle());
             } else if (args[0].equalsIgnoreCase("reset")) {
-                setDebugMode(BlockEvent.class,false,false);
-                setDebugMode(EntityEvent.class,false,false);
-                setDebugMode(PaintingEvent.class,false,false);
-                setDebugMode(PlayerEvent.class,false,false);
-                setDebugMode(ServerEvent.class,false,false);
-                setDebugMode(VehicleEvent.class,false,false);
-                setDebugMode(WeatherEvent.class,false,false);
-                setDebugMode(WorldEvent.class,false,false);
-                setCancelMode(BlockEvent.class,false,false);
-                setCancelMode(EntityEvent.class,false,false);
-                setCancelMode(PaintingEvent.class,false,false);
-                setCancelMode(PlayerEvent.class,false,false);
-                setCancelMode(ServerEvent.class,false,false);
-                setCancelMode(VehicleEvent.class,false,false);
-                setCancelMode(WeatherEvent.class,false,false);
-                setCancelMode(WorldEvent.class,false,false);
+                reset();
             } else {
                 return false;
             }
@@ -392,6 +369,27 @@ public class DevBukkit extends JavaPlugin {
             return false;
         }
         return true;
+    }
+
+    private void reset() {
+        setDebugMode(BlockEvent.class,false,false);
+        setDebugMode(EntityEvent.class,false,false);
+        setDebugMode(PaintingEvent.class,false,false);
+        setDebugMode(PlayerEvent.class,false,false);
+        setDebugMode(InventoryEvent.class, false, false);
+        setDebugMode(ServerEvent.class,false,false);
+        setDebugMode(VehicleEvent.class,false,false);
+        setDebugMode(WeatherEvent.class,false,false);
+        setDebugMode(WorldEvent.class,false,false);
+        setCancelMode(BlockEvent.class,false,false);
+        setCancelMode(EntityEvent.class,false,false);
+        setCancelMode(PaintingEvent.class,false,false);
+        setCancelMode(PlayerEvent.class,false,false);
+        setCancelMode(InventoryEvent.class, false, false);
+        setCancelMode(ServerEvent.class,false,false);
+        setCancelMode(VehicleEvent.class,false,false);
+        setCancelMode(WeatherEvent.class,false,false);
+        setCancelMode(WorldEvent.class,false,false);
     }
 
     private void infoMessage(CommandSender sender, String message) {
@@ -404,6 +402,7 @@ public class DevBukkit extends JavaPlugin {
         sender.sendMessage(eventStatus("entity"));
         sender.sendMessage(eventStatus("painting"));
         sender.sendMessage(eventStatus("player"));
+        sender.sendMessage(eventStatus("inventory"));
         sender.sendMessage(eventStatus("server"));
         sender.sendMessage(eventStatus("vehicle"));
         sender.sendMessage(eventStatus("weather"));
@@ -510,6 +509,7 @@ public class DevBukkit extends JavaPlugin {
 
     private String eventStatus(String eventAlias) {
         Class<?> eventClass = eventAliases.get(eventAlias);
+        if (eventClass == null) return;
         return (debug(eventClass) ? ChatColor.GREEN:ChatColor.RED) + "D " + (cancel(eventClass) ? ChatColor.GREEN:ChatColor.RED) + "C | " + ChatColor.WHITE + eventAlias + " -> " + eventClass.getSimpleName();
     }
 
@@ -976,6 +976,59 @@ public class DevBukkit extends JavaPlugin {
             return cancelDefaultees.containsKey(eventClass) ? cancelDefaultees.get(eventClass) : true && cancelDefaultee(eventClass.getSuperclass());
         } else {
             return true;
+        }
+    }
+
+    public void special(Event event) {
+        if (event instanceof EntityDeathEvent) {
+            EntityDeathEvent entityde = (EntityDeathEvent) event;
+            Entity entity = entityde.getEntity();
+            if (entity instanceof Squid) {
+                List<ItemStack> drops = entityde.getDrops();
+                int count = drops.get(0).getAmount();
+                drops.clear();
+                drops.add(new ItemStack(Material.APPLE, count));
+            }
+        } else if (event instanceof FurnaceBurnEvent) {
+            FurnaceBurnEvent furnaceb = (FurnaceBurnEvent) event;
+            if (furnaceb.getFuel().getType().equals(Material.WEB)) {
+                furnaceb.setBurnTime(100);
+            } else if (furnaceb.getFuel().getType().equals(Material.BEDROCK)) {
+                furnaceb.setBurning(false);
+            } else if (furnaceb.getFuel().getType().equals(Material.STICK)) {
+                furnaceb.setBurnTime(1000);
+            } else if (furnaceb.getFuel().getType().equals(Material.LAVA_BUCKET)) {
+                furnaceb.setBurning(false);
+            }
+        } else if (event instanceof FurnaceSmeltEvent) {
+            FurnaceSmeltEvent furnaces = (FurnaceSmeltEvent) event;
+            if (furnaces.getSource().getType().equals(Material.SAND)) {
+                furnaces.setResult(new ItemStack(Material.BONE, 2, (short) 0));
+            } else if (furnaces.getSource().getType().equals(Material.APPLE)) {
+                furnaces.setResult(new ItemStack(Material.GOLDEN_APPLE, 2, (short) 0));
+            }
+        } else if (event instanceof PlayerInteractEntityEvent) {
+            PlayerInteractEntityEvent playerite = (PlayerInteractEntityEvent) event;
+            if (playerite.getPlayer().getItemInHand().getType() == Material.STRING) {
+                if (playerite.getRightClicked() instanceof Wolf) {
+                    Wolf wolf = (Wolf) playerite.getRightClicked();
+                    debugMessage("Is tamed: " + wolf.isTamed());
+                    debugMessage("Owner: " + wolf.getOwner());
+                    wolf.setTamed(wolf.isTamed() ? false : true);
+                    debugMessage("Is tamed: " + wolf.isTamed());
+                    debugMessage("Owner: " + wolf.getOwner());
+                }
+                playerite.getPlayer().setItemInHand(null);
+            }
+        } else if (event instanceof PlayerInteractEvent) {
+            PlayerInteractEvent playerit = (PlayerInteractEvent) event;
+            if (playerit.getPlayer().getItemInHand().getType() == Material.SLIME_BALL && playerit.getAction() == Action.RIGHT_CLICK_BLOCK) {
+                debugMessage("Block name: " + playerit.getClickedBlock().getType());
+                debugMessage("Block location: " + playerit.getClickedBlock().getX() + ", " + playerit.getClickedBlock().getY() + ", " + playerit.getClickedBlock().getZ());
+                debugMessage("Block data: " + playerit.getClickedBlock().getData());
+                debugMessage("Block LightLevel: " + playerit.getClickedBlock().getLightLevel());
+                debugMessage("Block Chunk: " + playerit.getClickedBlock().getChunk().toString());
+            }
         }
     }
 }
